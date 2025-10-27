@@ -28,10 +28,13 @@ namespace SmartHomeAsistent.services.classes
 
         }
 
-        public async Task<bool> DeleteRelayScenario(int relayScenarioId)
+        public async Task<bool> DeleteRelayScenario(int relayScenarioId, int userId)
         {
             RelayScenario relayScenarion = await _context.RelayScenarios.FirstOrDefaultAsync(x => x.Id == relayScenarioId)
                 ?? throw new Exception("Сценарии не найдены");
+
+            if(relayScenarion.UserId != userId)
+                throw new Exception("Нельзя удалять сценарии другого пользователя");           
 
             _context.RelayScenarios.Remove(relayScenarion);
             await _context.SaveChangesAsync();

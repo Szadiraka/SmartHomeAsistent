@@ -11,7 +11,7 @@ namespace SmartHomeAsistent.services.interfaces
 
         public Task<bool> UpdateRelayScenario(int relayScenarioId, RelayScenarioDTO relayScenario);
 
-        public Task<bool> DeleteRelayScenario(int relayScenarioId);
+        public Task<bool> DeleteRelayScenario(int relayScenarioId, int userId);
 
         public Task<bool> AddRelayScenarion(RelayScenarioDTO relayScenario);
 

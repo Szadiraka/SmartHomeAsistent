@@ -1,0 +1,6 @@
+@SmartHomeAsistent_HostAddress = http://localhost:5171
+
+GET {{SmartHomeAsistent_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

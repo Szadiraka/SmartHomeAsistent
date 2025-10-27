@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SmartHomeAsistent.CustomExceptions;
 using SmartHomeAsistent.DTO;
 using SmartHomeAsistent.Entities;
 using SmartHomeAsistent.services.interfaces;
@@ -23,91 +25,87 @@ namespace SmartHomeAsistent.Controllers
         [HttpPost("add")]
         public async Task<IActionResult> AddDevice([FromBody] DeviceDTO deviceDto)
         {
-            try
+            if (!ModelState.IsValid)
+                throw new ValidationException("Некорректные данные");
+            var result = await _service.AddDeviceAsync(deviceDto);
+            return Ok(new
             {
-                bool result = await _service.AddDeviceAsync(deviceDto);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateDevice(int id, [FromBody] DeviceDTO deviceDto)
         {
-            try
-            {
-                var result = await _service.UpdateDeviceAsync(id, deviceDto);
-                return Ok(new { result });
-            }
-            catch(Exception ex)
-            {
-                    return BadRequest(new { message = ex.Message });
-            }
-          
+            if(!ModelState.IsValid)
+                throw new ValidationException("Некорректные данные");
            
+            var result = await _service.UpdateDeviceAsync(id, deviceDto);
+            return Ok(new
+            {
+                success = true,
+                data = result
+            });
+
+
         }
 
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetDeviceById(int id)
         {
-            try
+           
+            var result = await _service.GetDeviceById(id);
+            return Ok(new
             {
-                Device device = await _service.GetDeviceById(id);
-                return Ok(device);
-            }
-            catch(Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
         [HttpGet("byAccount/{accountId:int}")]
         public async Task<IActionResult> GetDevicesByAccountId(int accountId)
         {
-            try
+           
+            var result = await _service.GetDevicesByAccountId(accountId);
+            return Ok(new
             {
-                var devices = await _service.GetDevicesByAccountId(accountId);
-                return Ok(devices);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllDevices([FromQuery] string? name)
         {
-            try
+           
+            Expression<Func<Device,bool>> filter = x =>
+            (string.IsNullOrEmpty(name) || x.Name.ToLower().Contains(name.ToLower()));
+            var result = await _service.GetAllDevices(filter);
+            return Ok(new
             {
-                Expression<Func<Device,bool>> filter = x =>
-                (string.IsNullOrEmpty(name) || x.Name.ToLower().Contains(name.ToLower()));
-                var devices = await _service.GetAllDevices(filter);
-                return Ok(devices);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }      
 
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteDevice(int id)
         {
-            try
+          
+            var result = await _service.DeleteDeviceAsync(id);
+            return Ok(new
             {
-                bool result = await _service.DeleteDeviceAsync(id);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
        

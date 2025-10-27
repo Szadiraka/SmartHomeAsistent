@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SmartHomeAsistent.CustomExceptions;
 using SmartHomeAsistent.DTO;
 using SmartHomeAsistent.Entities;
 using SmartHomeAsistent.services.interfaces;
@@ -19,9 +20,10 @@ namespace SmartHomeAsistent.services.classes
 
         public async Task<bool> AddDeviceAsync(DeviceDTO deviceDto)
         {
-           Account account = _context.Accounts.FirstOrDefault(x=>x.Id == deviceDto.AccountId) ?? throw new Exception("Аккаунт с указанным id не найден");
+           Account account = _context.Accounts.FirstOrDefault(x=>x.Id == deviceDto.AccountId)
+                ?? throw new NotFoundException("Аккаунт с указанным id не найден");
            if(await _context.Devices.AnyAsync(x => x.DeviceUniqueId == deviceDto.DeviceUniqueId))
-               throw new Exception("Устройство с таким уникальным id уже существует");
+               throw new BadRequestException("Устройство с таким уникальным id уже существует");
             Device device = new()
             {
                 Name = deviceDto.Name,
@@ -39,7 +41,8 @@ namespace SmartHomeAsistent.services.classes
 
         public async Task<bool> DeleteDeviceAsync(int id)
         {
-           Device device = _context.Devices.FirstOrDefault(x => x.Id == id) ?? throw new Exception("Устройство с указанным id не найдено");
+           Device device = _context.Devices.FirstOrDefault(x => x.Id == id) 
+                ?? throw new NotFoundException("Устройство с указанным id не найдено");
            _context.Devices.Remove(device);
             await _context.SaveChangesAsync();
             return true;
@@ -47,13 +50,14 @@ namespace SmartHomeAsistent.services.classes
 
         public async Task<List<Device>> GetAllDevices(Expression<Func<Device, bool>> predicate)
         {
-           var devices =await  _context.Devices.Where(predicate).ToListAsync();
+           var devices = await  _context.Devices.Where(predicate).ToListAsync();
             return devices;
         }
 
         public async Task<Device> GetDeviceById(int id)
         {
-            Device device =await _context.Devices.FirstOrDefaultAsync(x=>x.Id == id) ?? throw new Exception("Устройство с указанным id не найдено");
+            Device device =await _context.Devices.FirstOrDefaultAsync(x => x.Id == id)
+                ?? throw new NotFoundException("Устройство с указанным id не найдено");
             return device;
         }
 
@@ -65,7 +69,8 @@ namespace SmartHomeAsistent.services.classes
 
         public async Task<bool> UpdateDeviceAsync(int id, DeviceDTO deviceDto)
         {
-            Device device = await _context.Devices.FirstOrDefaultAsync(x => x.Id == id) ?? throw new Exception("Устройство с указанным id не найдено");
+            Device device = await _context.Devices.FirstOrDefaultAsync(x => x.Id == id) 
+                ?? throw new NotFoundException("Устройство с указанным id не найдено");
        
             device.Name = deviceDto.Name;
             device.AccountId = deviceDto.AccountId;

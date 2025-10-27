@@ -1,7 +1,7 @@
-﻿using SmartHomeAsistent.DTO;
+﻿using SmartHomeAsistent.CustomExceptions;
+using SmartHomeAsistent.DTO;
 using SmartHomeAsistent.services.interfaces;
-using System;
-using System.Reflection.Metadata.Ecma335;
+using System.Data;
 using System.Text;
 using System.Text.Json;
 
@@ -21,54 +21,37 @@ namespace SmartHomeAsistent.services.classes
         public async Task<ResponseElementDTO> GetStatusAsync(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
-                return new ResponseElementDTO { Success = false, Message = "Id is empty" };
+                throw new ValidationException("id - не валиден");
 
             var json = JsonSerializer.Serialize(new { id = id });
             var requestBody = new StringContent(json, Encoding.UTF8, "application/json");
-            try
-            {
-                var response = await _httpClient.PostAsync($"{basePath}/status", requestBody);
-                if (!response.IsSuccessStatusCode)
-                {
-                    return new ResponseElementDTO { Success = false, Message = $"Error: {response.ReasonPhrase}" };
-                }
+           
+            var response = await _httpClient.PostAsync($"{basePath}/status", requestBody);
+            if (!response.IsSuccessStatusCode)
+                throw new BadRequestException($"Ошибка при отправке запроса: {response.ReasonPhrase}");                 
 
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<ResponseElementDTO>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                return result ?? new ResponseElementDTO { Success = false, Message = "Error" };
-            }
-            catch (Exception ex)
-            {
-                return new ResponseElementDTO { Success = false, Message = $"Exception: {ex.Message}" };
-            }
-
+            string content = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<ResponseElementDTO>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return result ?? throw new BadRequestException("ошибка при конвертации данных");
+          
+          
         }
 
         public async Task<ResponseElementDTO> SwitchRelayAsync(string id, string action)
         {
-            if(action != "on" && action != "off")
-                return new ResponseElementDTO{Success = false, Message = "Action is not valid"};
-
+            if (action != "on" && action != "off")
+                throw new BadRequestException("Допустимые действия: on, off");
             var json = JsonSerializer.Serialize(new { id = id });
             var requestBody = new StringContent(json, Encoding.UTF8, "application/json");
-            try
-            {
+          
                 var response = await _httpClient.PostAsync($"{basePath}/{action}", requestBody);
                 if (!response.IsSuccessStatusCode)
-                {
-                    return new ResponseElementDTO { Success = false, Message = $"Error: {response.ReasonPhrase}" };
-                }
+                    throw new BadRequestException($"Ошибка при отправке запроса: {response.ReasonPhrase}");                
 
                 var content = await response.Content.ReadAsStringAsync();
                 var result = JsonSerializer.Deserialize<ResponseElementDTO>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                return result ?? new ResponseElementDTO { Success = false, Message = "Error" };
-            }
-            catch(Exception ex)
-            {
-                  return new ResponseElementDTO { Success = false, Message = $"Exception: {ex.Message}" };
-            }
-
-           
+                return result ?? throw new BadRequestException("ошибка при конвертации данных");           
+                       
         
         }
     }

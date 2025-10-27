@@ -22,8 +22,12 @@ namespace SmartHomeAsistent.Controllers
         {
             await _eventHubService.SendMessageAsync(status);
 
-            //Console.WriteLine("мыы получили сообщение и должны были отправить его в UI");
-            return Ok(new { message = "Сообщение получено" });
+            //Console.WriteLine("мы получили сообщение и должны были отправить его в UI");
+            return Ok(new
+            {
+                success = true,
+                data = "сообщение получено"
+            });
         }
     }
 }

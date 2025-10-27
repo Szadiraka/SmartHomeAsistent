@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SmartHomeAsistent.Entities;
+using SmartHomeAsistent.middleware;
 using SmartHomeAsistent.services;
 using SmartHomeAsistent.services.classes;
 using SmartHomeAsistent.services.interfaces;
@@ -63,6 +64,7 @@ namespace SmartHomeAsistent
             builder.Services.AddScoped<IUserDeviceService, UserDeviceService>();
             builder.Services.AddScoped<IDeviceLogService, DeviceLogService>();
             builder.Services.AddScoped<IRelayScenarioService, RelayScenarioService>();
+            builder.Services.AddScoped<IRelayCommandService, RelayCommandService>();
 
             builder.Services.AddSingleton<IEventHubService ,EventHubService>();
 
@@ -74,6 +76,9 @@ namespace SmartHomeAsistent
 
 
             var app = builder.Build();
+
+            //кастомный мидлвэа
+            app.UseMiddleware<ErrorHadlingMiddleware>();
 
             // Configure the HTTP request pipeline.
             app.UseCors("AllowClient");

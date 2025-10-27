@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SmartHomeAsistent.CustomExceptions;
 using SmartHomeAsistent.DTO;
 using SmartHomeAsistent.Entities;
 using SmartHomeAsistent.services.interfaces;
@@ -23,107 +25,96 @@ namespace SmartHomeAsistent.Controllers
       
         [HttpPost]
         public async Task<IActionResult> AddAccount([FromBody] AccountDTO accountDto)
-        {
-            try
+        {        
+            if (!ModelState.IsValid)
+                throw new ValidationException("Данные не валидны");
+            bool result= await _service.AddAccountAsync(accountDto);
+            return Ok(new
             {
-                if (!ModelState.IsValid)
-                    throw new Exception("Некорректные данные");
-                bool result= await _service.AddAccountAsync(accountDto);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });          
+           
            
         }
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateAccount( int id, [FromBody] AccountDTO accountDto)
         {
-            try
+            if (!ModelState.IsValid)
+                throw new ValidationException("Данные не валидны");
+            bool result = await _service.UpdateAccountAsync(id, accountDto);
+            return Ok(new
             {
-                if (!ModelState.IsValid)
-                    throw new Exception("Некорректные данные");
-                bool result = await _service.UpdateAccountAsync(id, accountDto);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetAccountById(int id)
         {
-            try
+             var result =await _service.GetAccountById(id);
+            return Ok(new
             {
-                var account =await _service.GetAccountById(id);
-                return Ok(account);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllAccounts()
         {
-            try
+            var result = await _service.GetAllAccounts();
+            return Ok(new
             {
-                var accounts = await _service.GetAllAccounts();
-                return Ok(accounts);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
         [HttpGet("byUser/{userId}")]
         public async Task<IActionResult> GetAllAccountsByUserId(int userId)
         {
-            try
+        
+            var result = await _service.GetAccountsByUserId(userId);
+            return Ok(new
             {
-                var accounts = await _service.GetAccountsByUserId(userId);
-                return Ok(accounts);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
 
-
-        [HttpDelete("id:int")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteAccount(int id)
-        {
-            try
+        {        
+            var result = await _service.DeleteAccountAsync(id);
+            return Ok(new
             {
-                bool result = await _service.DeleteAccountAsync(id);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
         [HttpPost("adduser")]  
         public async Task<IActionResult> AddSecondaryUserToAccount([FromBody] SecondaryUserDTO secondaryUserDto)
         {
-            try
+            if (!ModelState.IsValid)
+                throw new ValidationException("Данные не валидны");
+            var result = await _service.AddSecondaryUserToAccountAsync(secondaryUserDto);
+            return Ok(new
             {
-                bool result = await _service.AddSecondaryUserToAccountAsync(secondaryUserDto);
-                return Ok(new { result });
-            }catch(Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
 

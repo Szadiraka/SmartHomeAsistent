@@ -27,6 +27,8 @@ namespace SmartHomeAsistent.services.classes
             };
             Console.WriteLine($"Отправляем сообщение: для UI");
             await _hubContext.Clients.All.SendAsync("DeviceEvent", payload);
+
+            //тут нужно будет переработать и отправлять только тем, кто подписан на события
             Console.WriteLine($"Отправили сообщение: для UI");
         }
 

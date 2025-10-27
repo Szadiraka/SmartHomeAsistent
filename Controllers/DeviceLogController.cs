@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SmartHomeAsistent.CustomExceptions;
 using SmartHomeAsistent.DTO;
 using SmartHomeAsistent.Entities;
 using SmartHomeAsistent.services.interfaces;
@@ -22,43 +23,43 @@ namespace SmartHomeAsistent.Controllers
         [HttpPost("add")]
         public async Task<IActionResult> AddDeviceLog([FromBody] DeviceLogDTO deviceLogDTO)
         {
-            try
+           if(!ModelState.IsValid)
+                throw new ValidationException("Некорректные данные");
+            var result = await _service.AddDeviceLog(deviceLogDTO);
+            return Ok(new
             {
-                bool result = await _service.AddDeviceLog(deviceLogDTO);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteDeviceLog(int id)
         {
-            try
+          
+            var result = await _service.DeleteDeviceLog(id);
+            return Ok(new
             {
-                bool result = await _service.DeleteDeviceLog(id);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateDeviceLog(int id, [FromBody] DeviceLogDTO deviceLogDTO)
         {
-            try
+            if (!ModelState.IsValid)
+                throw new ValidationException("Некорректные данные");
+
+            var result = await _service.UpdateDeviceLog(id, deviceLogDTO);
+            return Ok(new
             {
-                bool result = await _service.UpdateDeviceLog(id, deviceLogDTO);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
 
@@ -66,15 +67,14 @@ namespace SmartHomeAsistent.Controllers
         [HttpGet("{id:int}")]
         public async Task< IActionResult> GetDeviceLogById(int id)
         {
-            try
+           
+            var result = await _service.GetDeviceLogById(id);
+            return Ok(new
             {
-                DeviceLog deviceLog = await _service.GetDeviceLogById(id);
-                return Ok(deviceLog);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
 
@@ -82,30 +82,28 @@ namespace SmartHomeAsistent.Controllers
 
         public async Task< IActionResult> GetDeviceLogsByDeviceId(int deviceId, [FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
-            try
+           
+            var result = await _service.GetDevicesLogsByDeviceId(deviceId, from, to );
+            return Ok(new
             {
-                var deviceLogs = await _service.GetDevicesLogsByDeviceId(deviceId, from, to );
-                return Ok(deviceLogs);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
 
         [HttpGet]
         public async Task<IActionResult> GetAllDeviceLogs([FromQuery] DateTime? from,[FromQuery] DateTime? to)
         {
-            try
+           
+            var result = await _service.GetAllDeviceLogs(from, to);
+            return Ok(new
             {
-                var deviceLogs = await _service.GetAllDeviceLogs(from, to);
-                return Ok(deviceLogs);
-            }
-            catch(Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
     }

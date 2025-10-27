@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SmartHomeAsistent.CustomExceptions;
 using SmartHomeAsistent.DTO;
 using SmartHomeAsistent.Entities;
 using SmartHomeAsistent.services.interfaces;
@@ -32,7 +33,7 @@ namespace SmartHomeAsistent.services.classes
         public async Task<bool> DeleteDeviceLog(int id)
         {
            DeviceLog deviceLog =await _context.DeviceLogs.FirstOrDefaultAsync(x=>x.Id == id) 
-                ?? throw new Exception("девай-лог не найден");
+                ?? throw new NotFoundException("девайс-лог не найден");
 
             _context.DeviceLogs.Remove(deviceLog);
             await _context.SaveChangesAsync();
@@ -43,43 +44,52 @@ namespace SmartHomeAsistent.services.classes
         public async Task<DeviceLog> GetDeviceLogById(int id)
         {
             DeviceLog deviceLog = await _context.DeviceLogs.FirstOrDefaultAsync(x => x.Id == id)
-               ?? throw new Exception("девай-лог не найден");
+               ?? throw new NotFoundException("девай-лог не найден");
             return deviceLog;
         }
 
         public async Task<List<DeviceLog>> GetDevicesLogsByDeviceId(int deviceId, DateTime? from, DateTime? to)
         {
+            if (deviceId <= 0)
+                throw new ValidationException("Невалидный Id устройства");
+            if (from.HasValue && to.HasValue && from > to)
+                (from, to) = (to, from);
+
             var query = _context.DeviceLogs.Where(x=>x.DeviceId == deviceId);
       
 
             if(from.HasValue)
-                query = query.Where(x => x.TimeStamp >= from);
+                query = query.Where(x => x.TimeStamp >= from.Value);
             if(to.HasValue)
-                query = query.Where(x => x.TimeStamp <= to);
+                query = query.Where(x => x.TimeStamp <= to.Value);
 
-            query = query.OrderByDescending(x => x.TimeStamp);
-
-            return await query.ToListAsync();
+            return await query.OrderByDescending(x => x.TimeStamp)
+                .ToListAsync();
         }
 
         public async Task<List<DeviceLog>> GetAllDeviceLogs(DateTime? from, DateTime? to)
         {
             var query = _context.DeviceLogs.AsQueryable();
 
+            if (from.HasValue && to.HasValue && from > to)
+                (from, to) = (to, from);
+
             if (from.HasValue)
                 query = query.Where(x => x.TimeStamp >= from);
             if (to.HasValue)
                 query = query.Where(x => x.TimeStamp <= to);
 
-            query = query.OrderByDescending(x => x.TimeStamp);
-
-            return await query.ToListAsync();
+            return await query.OrderByDescending(x => x.TimeStamp)
+                  .ToListAsync();
         }
 
         public async Task<bool> UpdateDeviceLog(int id, DeviceLogDTO deviceLogDTO)
         {
+            if(id<=0)
+                throw new ValidationException("Невалидный Id устройства");
+
             DeviceLog deviceLog = await _context.DeviceLogs.FirstOrDefaultAsync(x => x.Id == id)
-                 ?? throw new Exception("девайс-лог не найден");
+                 ?? throw new NotFoundException("девайс-лог не найден");
             deviceLog.DeviceId = deviceLogDTO.DeviceId;
             deviceLog.IsOn = deviceLogDTO.IsOn;
             deviceLog.TimeStamp = DateTime.UtcNow;

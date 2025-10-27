@@ -1,6 +1,6 @@
 ﻿namespace SmartHomeAsistent.Enumes
 {
-   public  enum RelayCommmandType   // команда реле
+   public  enum RelayCommandType   // команда реле
     {
         On,
         Off

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SmartHomeAsistent.CustomExceptions;
 using SmartHomeAsistent.Entities;
 using SmartHomeAsistent.services.interfaces;
 using System.Runtime.CompilerServices;
@@ -16,6 +17,9 @@ namespace SmartHomeAsistent.services.classes
 
         public async Task<bool> AddRoleAsync(string roleName)
         {
+            if(string.IsNullOrEmpty(roleName))
+                throw new ValidationException("Некорректные название роли");
+
             Role role = new Role
             {
                 Name = roleName
@@ -34,28 +38,29 @@ namespace SmartHomeAsistent.services.classes
 
         public async Task<Role> GetRoleById(int id)
         {
-           Role? role =await _context.Roles.FirstOrDefaultAsync(x => x.Id == id);
-           if(role == null)
-                throw new Exception("Роли с таким id не существует");
+           Role role =await _context.Roles.FirstOrDefaultAsync(x => x.Id == id)
+                ?? throw new NotFoundException("Роли с таким id не существует");           
+               
             return role;
         }
 
 
         public async Task<Role> GetRoleByName(string roleName)
         {
-            Role? role =await _context.Roles.FirstOrDefaultAsync(x => x.Name.ToLower() == roleName.ToLower());
-            if (role == null)
-                throw new Exception("Роли с таким именем не существует");
+            Role role =await _context.Roles.FirstOrDefaultAsync(x => x.Name.ToLower() == roleName.ToLower())
+                ?? throw new NotFoundException("Роли с таким именем не существует");
             return role;
         }
 
         public async Task<bool> UpdateRoleAsync(int id, string newRoleName)
         {
-           Role? role = _context.Roles.FirstOrDefault(x=>x.Id == id);
-            if (role == null)
-                throw new Exception("Роль с указанным Id не существует");
+            if(string.IsNullOrEmpty(newRoleName))
+                throw new ValidationException("Некорректные название роли");
+
+           Role role = _context.Roles.FirstOrDefault(x=>x.Id == id)
+                 ?? throw new NotFoundException("Роль с указанным Id не существует");
             if (role.Name.ToLower() == newRoleName.ToLower())
-                return true;
+               throw new BadRequestException("Роль с таким именем уже существует");
             role.Name = newRoleName.ToLower();
             _context.Roles.Update(role);
             await _context.SaveChangesAsync();

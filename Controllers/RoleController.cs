@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartHomeAsistent.CustomExceptions;
 using SmartHomeAsistent.services.interfaces;
 namespace SmartHomeAsistent.Controllers
 {
@@ -21,46 +22,47 @@ namespace SmartHomeAsistent.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllRoles()
         {
-            try
+           
+            var result =await _service.GetAllRoles();
+            return Ok(new
             {
-                var roles =await _service.GetAllRoles();
-                return Ok(roles);
-            }
-            catch(Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
+
         }
 
    
-        [HttpPost("add")]
+        [HttpPost]
         public async Task<IActionResult> AddRole([FromBody] string roleName)
         {
-            try
+            if(string.IsNullOrWhiteSpace(roleName))
+                throw new ValidationException("Некорректные данные");
+            
+            var result = await _service.AddRoleAsync(roleName);
+            return Ok(new
             {
-                bool result = await _service.AddRoleAsync(roleName);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateRole(int id, [FromBody] string roleName)
         {
-            try
-            {
-                 bool result = await  _service.UpdateRoleAsync(id, roleName);
-                 return Ok(new { result });
+            if (string.IsNullOrWhiteSpace(roleName))
+                throw new ValidationException("Некорректные данные");
 
-            }
-            catch (Exception ex)
+            var result = await  _service.UpdateRoleAsync(id, roleName);
+            return Ok(new
             {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
 
@@ -68,29 +70,27 @@ namespace SmartHomeAsistent.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetRoleById(int id)
         {
-            try
+           
+              var result =await  _service.GetRoleById(id);
+            return Ok(new
             {
-                var role =await  _service.GetRoleById(id);
-                return Ok(role);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
         [HttpGet("{roleName}")]
         public async Task<IActionResult> GetRoleByName(string roleName)
         {
-            try
+           
+            var result =await _service.GetRoleByName(roleName);
+            return Ok(new
             {
-                var role =await _service.GetRoleByName(roleName);
-                return Ok(role);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }      
        
 

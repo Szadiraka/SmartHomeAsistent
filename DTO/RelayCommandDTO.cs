@@ -1,25 +1,23 @@
-﻿using SmartHomeAsistent.Enumes;
+﻿using SmartHomeAsistent.Entities;
+using SmartHomeAsistent.Enumes;
 using System.ComponentModel.DataAnnotations;
 
-namespace SmartHomeAsistent.Entities
+namespace SmartHomeAsistent.DTO
 {
-    public class RelayCommand
+    public class RelayCommandDTO
     {
-        [Key]
-        public int Id { get; set; }
-
         [Required]
         [MinLength(2)]
         [MaxLength(100)]
         public string CommandName { get; set; } = string.Empty;
 
-
+        [Required]
+        [Range(1, int.MaxValue)]
         public int RelayScenarioId { get; set; }
-        public RelayScenario? Scenario { get; set; }
 
-
+        [Required]
+        [Range(1, int.MaxValue)]
         public int DeviceId { get; set; }
-        public Device? Device { get; set; }
 
         [Required]
         public RelayCommandType CommandType { get; set; }
@@ -31,6 +29,7 @@ namespace SmartHomeAsistent.Entities
 
         public TimeSpan? Delay { get; set; }
 
+        [Required]
         public RepeatSettings RepeatSettings { get; set; } = null!;
     }
 }

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
+using SmartHomeAsistent.CustomExceptions;
 using SmartHomeAsistent.DTO;
 using SmartHomeAsistent.Entities;
 using SmartHomeAsistent.Infrastructure;
@@ -23,63 +25,63 @@ namespace SmartHomeAsistent.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserDTO userDto)
         {
-            try
-            {
+            if (!ModelState.IsValid)
+                throw new ValidationException("Ќекорректные данные пользовател€");
+          
                 User user = await _service.RegisterAsync(userDto);
-
-                return Ok(new { user.Id, user.Email, roleName = user.Role.Name });
-
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = new { user.Id, user.Email, roleName = user.Role.Name } 
+            });       
+  
+           
         }
 
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
-            try
+           if(!ModelState.IsValid)
+                throw new ValidationException("Ќекорректные данные");
+            string token =await _service.Login(loginDto.Email, loginDto.Password);
+            return Ok(new
             {
-                string token =await _service.Login(loginDto.Email, loginDto.Password);
-                return Ok(new { token });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+                success = true,
+                data = token
+            });
+           
+            
+        }       
+
 
         [Authorize(Roles = "admin")]
         [HttpPost]
         public async Task<IActionResult> GetAllAsync([FromBody] UserFilter? filter)
         {
-            try
+           
+            var result = await _service.GetAllUsersAsync(filter);
+            return Ok(new
             {
-                var users = await _service.GetAllUsersAsync(filter);
-                return Ok(users);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message }); 
-            }
+                success = true,
+                data = result 
+            });
 
         }
 
         [Authorize]
         [HttpGet("{id}")]
-        public async Task< IActionResult> GetById(int id)
+        public async Task< IActionResult> GetUserById(int id)
         {
-            try
+           if(id<=0)
+                throw new ValidationException("не валидные данные");
+            var result =await _service.GetUserById(id);
+            return Ok(new
             {
-                var user =await _service.GetUserById(id);
-                return Ok(user);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
 
         }
 
@@ -87,78 +89,80 @@ namespace SmartHomeAsistent.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] UserDTO userDto)
         {
+            if (!ModelState.IsValid)
+                throw new ValidationException("не валидные данные");
            
-            try
+            var result = await _service.UpdateUserAsync(id, userDto);
+            return Ok(new
             {
-                bool result = await _service.UpdateUserAsync(id, userDto);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
         [Authorize(Roles = "admin")]
-        [HttpGet("block/{id}")]
+        [HttpPut("block/{id}")]
         public async Task<IActionResult> BlockUser(int id)
         {
-            try
+            if (id <= 0)
+                throw new ValidationException("не валидные данные");
+            var result = await _service.BlockUserAsync(id);
+            return Ok(new
             {
-                bool result = await _service.BlockUserAsync(id);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
 
         [Authorize(Roles = "admin")]
-        [HttpGet("unblock/{id}")]
+        [HttpPut("unblock/{id}")]
         public async Task<IActionResult> UnBlockUser(int id)
         {
-            try
+            if (id <= 0)
+                throw new ValidationException("не валидные данные");
+            var result = await _service.UnblockUserAsync(id);
+            return Ok(new
             {
-                bool result = await _service.UnblockUserAsync(id);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
+
         }
 
 
         [Authorize(Roles = "admin")]
-        [HttpGet("delete{id}")]
+        [HttpPut("delete/{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            try
+            if (id <= 0)
+                throw new ValidationException("не валидные данные");
+
+            var result = await _service.DeleteUserAsync(id);
+            return Ok(new
             {
-                bool result = await _service.DeleteUserAsync(id);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
         [Authorize(Roles = "admin")]
-        [HttpGet("recovery/{id}")]
+        [HttpPut("recovery/{id}")]
         public async Task<IActionResult> RecoveryUser(int id)
         {
-            try
+            if (id <= 0)
+                throw new ValidationException("не валидные данные");
+            var result = await _service.RecoveryUserAsync(id);
+            return Ok(new
             {
-                bool result = await _service.RecoveryUserAsync(id);
-                return Ok(new { result });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                success = true,
+                data = result
+            });
+
         }
 
 

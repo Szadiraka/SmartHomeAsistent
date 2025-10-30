@@ -13,7 +13,7 @@ namespace SmartHomeAsistent.services.interfaces
 
         Task <User> RegisterAsync(UserDTO userDto);
 
-        Task<string> Login(string email, string password);
+        Task<AnswerDTO> Login(string email, string password);
 
         Task <bool> UpdateUserAsync(int id, UserDTO userDto);
 

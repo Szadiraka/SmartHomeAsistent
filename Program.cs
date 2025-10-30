@@ -65,6 +65,7 @@ namespace SmartHomeAsistent
             builder.Services.AddScoped<IDeviceLogService, DeviceLogService>();
             builder.Services.AddScoped<IRelayScenarioService, RelayScenarioService>();
             builder.Services.AddScoped<IRelayCommandService, RelayCommandService>();
+            builder.Services.AddScoped<ICodeService, CodeService>();
 
             builder.Services.AddSingleton<IEventHubService ,EventHubService>();
 

@@ -21,6 +21,9 @@ namespace SmartHomeAsistent.Entities
         [EmailAddress]        
         public string Email { get; set; } = string.Empty;
 
+        //добавим новое поле- для отслеживания подтвержденной почты
+        public bool EmailConfirmed { get; set; } = false;
+
         [Required]      
         
         public string PasswordHash { get; set; } = string.Empty;
@@ -39,6 +42,8 @@ namespace SmartHomeAsistent.Entities
         public ICollection <Account> Accounts { get; set; } = [];
         public ICollection <UserDevice> UserDevices { get; set; } = [];
         public ICollection <RelayScenario>  RelayScenarios { get; set; } = [];
+
+        public ICollection <Code> Codes { get; set; } = [];
 
     }
 

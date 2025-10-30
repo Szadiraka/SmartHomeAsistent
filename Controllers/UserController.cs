@@ -6,6 +6,7 @@ using SmartHomeAsistent.DTO;
 using SmartHomeAsistent.Entities;
 using SmartHomeAsistent.Infrastructure;
 using SmartHomeAsistent.services.interfaces;
+using System.Security.Claims;
 
 
 namespace SmartHomeAsistent.Controllers
@@ -15,44 +16,71 @@ namespace SmartHomeAsistent.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _service;
+        private readonly ICodeService _codeService;
 
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, ICodeService codeService)
         {
             _service = userService;
+            _codeService = codeService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserDTO userDto)
         {
             if (!ModelState.IsValid)
-                throw new ValidationException("Некорректные данные пользователя");
-          
+                throw new ValidationException("Некорректные данные пользователя");          
                 User user = await _service.RegisterAsync(userDto);
             return Ok(new
             {
                 success = true,
-                data = new { user.Id, user.Email, roleName = user.Role.Name } 
+                data = "Вы успешно зарегестрированы"
             });       
   
            
         }
 
-
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
-           if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
                 throw new ValidationException("Некорректные данные");
-            string token =await _service.Login(loginDto.Email, loginDto.Password);
+            AnswerDTO answer = await _service.Login(loginDto.Email, loginDto.Password);
+
             return Ok(new
             {
-                success = true,
-                data = token
+                success = answer.EmailConfirmed,  //передаем в UI - подтверждена ли почта
+                data = answer.Token,
+
             });
-           
-            
-        }       
+
+
+        }
+
+        [HttpPost("confirmEmail")]
+        [Authorize]
+        public  async Task<IActionResult> ConfirmEmail([FromBody] int code)
+        {
+            Claim? userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                throw new ValidationException("Пользователь не найден или токен недействителен");
+
+            if (!int.TryParse(userIdClaim.Value, out int userId))
+                throw new ValidationException("Некорректный индитификатор пользователя");
+
+            var result = await _codeService.ConfirmCodeAsync(userId, code);
+            if (result)
+                return Ok(new
+                {
+                    success = true,
+                    data = "Электронная почта подтверждена"
+                });
+            throw new ValidationException("Код не правильный либо истекло время подтверждения");
+        }
+
+
+
+        
 
 
         [Authorize(Roles = "admin")]

@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using SmartHomeAsistent.CustomExceptions;
 using SmartHomeAsistent.DTO;
 using SmartHomeAsistent.Entities;
 using SmartHomeAsistent.Infrastructure;
@@ -30,12 +32,12 @@ namespace SmartHomeAsistent.services.classes
         public async Task<User> RegisterAsync(UserDTO userDto)
         {
             if(_context.Users.Any(x=>x.Email == userDto.Email))
-                throw new Exception("Пользователь с такой почтой уже существует");
+                throw new BadRequestException("Пользователь с такой почтой уже существует");
 
             var roleName = userDto.RoleName ?? "client";
             var role = _context.Roles.FirstOrDefault(x => x.Name == roleName);
             if (role == null)
-                throw new Exception("Такой роли не существует");
+                throw new NotFoundException("Такой роли не существует");
             var user = new User
             {
                 Name = userDto.Name,
@@ -46,13 +48,29 @@ namespace SmartHomeAsistent.services.classes
 
             user.PasswordHash = passwordHasher.HashPassword(user, userDto.Password);
             await _context.Users.AddAsync(user);
+
+            //тут нужно создать коде и сохранить в  бд, а также отправить на почту
+            var randomCode = new Random().Next(1000, 10000);
+            var code = new Code
+            {
+                UserId = user.Id,
+                Data = randomCode,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+
+            };
+            await _context.Codes.AddAsync(code);
+            //-----------  вызываем сервис для отправки на почту сгенерированным кодом
+
+
+
             await _context.SaveChangesAsync();
             return user;
 
 
         }
 
-        public async Task<string> Login(string email, string password)
+        public async Task<AnswerDTO> Login(string email, string password)
         {
             
             var user =await _context.Users.FirstOrDefaultAsync(x => x.Email == email && x.Hidden ==false);
@@ -65,25 +83,31 @@ namespace SmartHomeAsistent.services.classes
              var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
             if(result == PasswordVerificationResult.Failed)
                 throw new Exception("Неверный пароль");
+       
+            string jwtToken = CreateToken(user);           
 
-            // после всех успешных проверок, создаем токен и возвращаем пользователя
+            return new AnswerDTO { Token = jwtToken, EmailConfirmed = user.EmailConfirmed };
 
-            var claims = new List<Claim> 
-            {  new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        }
+
+        private string CreateToken(User user)
+        {
+            var claims = new List<Claim>
+            {   new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.Role, user.Role.Name)
+                new Claim(ClaimTypes.Role, user.Role.Name),
+                new Claim("confirmEmail", false.ToString())
             };
 
-            JwtSetting? jwtSettings =_configuration.GetSection("JwtSettings").Get<JwtSetting>();
-            if(jwtSettings == null)
-                throw new Exception("Командная строка не нашлась");
-                
+            JwtSetting jwtSettings = _configuration.GetSection("JwtSettings").Get<JwtSetting>()
+                ?? throw new Exception("Командная строка не нашлась");
+
             var jwt = new JwtSecurityToken(
                 issuer: jwtSettings.Issuer,
                 audience: jwtSettings.Audience,
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(jwtSettings.DurationInMinutes),
+                expires: DateTime.UtcNow.AddMinutes(jwtSettings.DurationInMinutes),
                 signingCredentials: new SigningCredentials(
                     new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
                     SecurityAlgorithms.HmacSha256
@@ -91,9 +115,7 @@ namespace SmartHomeAsistent.services.classes
 
             );
             var encodeJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
-
             return encodeJwt;
-
         }
 
 

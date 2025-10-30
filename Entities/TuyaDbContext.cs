@@ -20,6 +20,7 @@ namespace SmartHomeAsistent.Entities
         public DbSet<DeviceLog> DeviceLogs { get; set; }
         public DbSet<RelayScenario> RelayScenarios { get; set; }
         public DbSet<RelayCommand> RelayCommands { get; set; } 
+        public DbSet<Code> Codes { get; set; }
         //public DbSet<RepeatSettings> RepeatSettings { get; set; }
 
 

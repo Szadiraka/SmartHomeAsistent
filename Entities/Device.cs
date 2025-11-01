@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace SmartHomeAsistent.Entities
 {
@@ -17,7 +18,7 @@ namespace SmartHomeAsistent.Entities
         public int AccountId { get; set; }
         public Account? Account { get; set; }
 
-
+        [Precision(10, 2)]
         public decimal SwitchingPower { get; set; }
 
         public ICollection <DeviceLog> DeviceLogs {get;set;} = [];

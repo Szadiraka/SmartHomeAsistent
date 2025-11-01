@@ -1,3 +1,5 @@
+using Hangfire;
+using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -53,8 +55,19 @@ namespace SmartHomeAsistent
 
 
 
-            string connectionString = builder.Configuration.GetSection("ConnectionStrings:DbConnectionString").Value ?? throw new Exception("командная стока не найдена");
-            builder.Services.AddDbContext<TuyaDbContext>(op=>op.UseSqlServer(connectionString));
+            string dbConnectionString = builder.Configuration.GetSection("ConnectionStrings:DbConnectionString").Value ?? throw new Exception("командная стока не найдена");
+            builder.Services.AddDbContext<TuyaDbContext>(op=>op.UseSqlServer(dbConnectionString));
+
+            //подключаем hangHire SqlServer
+            string hangFireConnectionString = builder.Configuration.GetSection("ConnectionStrings:HangFireConnectionString").Value ?? throw new Exception("командная строка к hangfire не найдена");
+            builder.Services.AddHangfire(config =>config                
+                .UseRecommendedSerializerSettings()
+                .UseSqlServerStorage(hangFireConnectionString));
+
+            //Запускаем сервер Hangfire
+            builder.Services.AddHangfireServer();
+
+
             builder.Services.AddSingleton<EncryptionService>();
 
             builder.Services.AddScoped<IUserService, UserService>();
@@ -66,6 +79,8 @@ namespace SmartHomeAsistent
             builder.Services.AddScoped<IRelayScenarioService, RelayScenarioService>();
             builder.Services.AddScoped<IRelayCommandService, RelayCommandService>();
             builder.Services.AddScoped<ICodeService, CodeService>();
+           
+            builder.Services.AddSingleton<IMessageService,EmailService>();
 
             builder.Services.AddSingleton<IEventHubService ,EventHubService>();
 
@@ -89,6 +104,7 @@ namespace SmartHomeAsistent
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseHangfireDashboard("/hangfire");
 
             app.MapControllers();
 

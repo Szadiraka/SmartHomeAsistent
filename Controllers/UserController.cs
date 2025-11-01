@@ -7,6 +7,9 @@ using SmartHomeAsistent.Entities;
 using SmartHomeAsistent.Infrastructure;
 using SmartHomeAsistent.services.interfaces;
 using System.Security.Claims;
+using System.IO;
+using Microsoft.Extensions.Primitives;
+using Hangfire;
 
 
 namespace SmartHomeAsistent.Controllers
@@ -17,13 +20,18 @@ namespace SmartHomeAsistent.Controllers
     {
         private readonly IUserService _service;
         private readonly ICodeService _codeService;
+        private readonly IMessageService _messageService;
+      
 
-
-        public UserController(IUserService userService, ICodeService codeService)
+      
+        public UserController(IUserService userService, ICodeService codeService, IMessageService messageService)
         {
             _service = userService;
-            _codeService = codeService;
+            _codeService = codeService;  
+            _messageService = messageService;
+           
         }
+
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserDTO userDto)
@@ -47,6 +55,19 @@ namespace SmartHomeAsistent.Controllers
                 throw new ValidationException("Ќекорректные данные");
             AnswerDTO answer = await _service.Login(loginDto.Email, loginDto.Password);
 
+
+            //----------------------
+            if (!answer.EmailConfirmed)
+            {
+                // создаем код и сохран€ем в бд
+                int code = GenerateRandomCode();
+                await _codeService.CreateCode(answer.UserId,code,5);
+
+                //создаем сообщение в очереди
+                BackgroundJob.Enqueue(() => _messageService.SendMessage(answer.Email, null, null, code));
+               
+            }
+
             return Ok(new
             {
                 success = answer.EmailConfirmed,  //передаем в UI - подтверждена ли почта
@@ -54,16 +75,15 @@ namespace SmartHomeAsistent.Controllers
 
             });
 
-
         }
+        
 
         [HttpPost("confirmEmail")]
         [Authorize]
         public  async Task<IActionResult> ConfirmEmail([FromBody] int code)
         {
-            Claim? userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-                throw new ValidationException("ѕользователь не найден или токен недействителен");
+            Claim userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier) ??
+                  throw new ValidationException("ѕользователь не найден или токен недействителен");
 
             if (!int.TryParse(userIdClaim.Value, out int userId))
                 throw new ValidationException("Ќекорректный индитификатор пользовател€");
@@ -76,11 +96,7 @@ namespace SmartHomeAsistent.Controllers
                     data = "Ёлектронна€ почта подтверждена"
                 });
             throw new ValidationException(" од не правильный либо истекло врем€ подтверждени€");
-        }
-
-
-
-        
+        }        
 
 
         [Authorize(Roles = "admin")]
@@ -190,6 +206,17 @@ namespace SmartHomeAsistent.Controllers
                 success = true,
                 data = result
             });
+
+        }
+
+
+        //--------------------------------------------------------------------------------//
+
+
+
+        private int GenerateRandomCode()
+        {
+            return Random.Shared.Next(100000, 1000000);
 
         }
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Hangfire;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -19,6 +20,7 @@ namespace SmartHomeAsistent.services.classes
         private readonly TuyaDbContext _context;
         private readonly PasswordHasher<User> passwordHasher;
         private readonly IConfiguration _configuration;
+  
 
         public UserService(TuyaDbContext context, IConfiguration configuration)
         {
@@ -84,9 +86,16 @@ namespace SmartHomeAsistent.services.classes
             if(result == PasswordVerificationResult.Failed)
                 throw new Exception("Неверный пароль");
        
-            string jwtToken = CreateToken(user);           
+            string jwtToken = CreateToken(user);       
 
-            return new AnswerDTO { Token = jwtToken, EmailConfirmed = user.EmailConfirmed };
+
+            return new AnswerDTO { 
+                Token = jwtToken,
+                EmailConfirmed = user.EmailConfirmed,
+                Email = user.Email,
+                UserId = user.Id
+            };
+
 
         }
 
@@ -224,5 +233,9 @@ namespace SmartHomeAsistent.services.classes
             await _context.SaveChangesAsync();
             return true;
         }
+
+
+
     }
 }
+    

@@ -75,29 +75,9 @@ namespace SmartHomeAsistent.Controllers
 
             });
 
-        }
-        
+        }       
 
-        [HttpPost("confirmEmail")]
-        [Authorize]
-        public  async Task<IActionResult> ConfirmEmail([FromBody] int code)
-        {
-            Claim userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier) ??
-                  throw new ValidationException("ѕользователь не найден или токен недействителен");
-
-            if (!int.TryParse(userIdClaim.Value, out int userId))
-                throw new ValidationException("Ќекорректный индитификатор пользовател€");
-
-            var result = await _codeService.ConfirmCodeAsync(userId, code);
-            if (result)
-                return Ok(new
-                {
-                    success = true,
-                    data = "Ёлектронна€ почта подтверждена"
-                });
-            throw new ValidationException(" од не правильный либо истекло врем€ подтверждени€");
-        }        
-
+       
 
         [Authorize(Roles = "admin")]
         [HttpPost]

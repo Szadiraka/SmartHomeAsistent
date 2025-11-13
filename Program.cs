@@ -37,7 +37,7 @@ namespace SmartHomeAsistent
 
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 
-            builder.Services.AddAuthorization();
+         
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -52,7 +52,7 @@ namespace SmartHomeAsistent
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.GetSection("SecretKey").Value ?? string.Empty))
                     };
                 });
-
+            builder.Services.AddAuthorization();
 
 
             string dbConnectionString = builder.Configuration.GetSection("ConnectionStrings:DbConnectionString").Value ?? throw new Exception("командна€ стока не найдена");
@@ -66,7 +66,6 @@ namespace SmartHomeAsistent
 
             //«апускаем сервер Hangfire
             builder.Services.AddHangfireServer();
-
 
             builder.Services.AddSingleton<EncryptionService>();
 

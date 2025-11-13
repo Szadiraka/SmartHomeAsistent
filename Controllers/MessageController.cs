@@ -25,7 +25,7 @@ namespace SmartHomeAsistent.Controllers
 
 
 
-        [HttpPost("message")]
+        [HttpPost("sendmessage")]
         public async Task<IActionResult> SendMessage([FromBody] EmailMessageDTO emailMessage)
         {
             int code = GenerateRandomCode();

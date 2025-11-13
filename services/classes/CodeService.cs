@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SmartHomeAsistent.CustomExceptions;
 using SmartHomeAsistent.Entities;
 using SmartHomeAsistent.services.interfaces;
@@ -72,7 +74,7 @@ namespace SmartHomeAsistent.services.classes
             await  _context.SaveChangesAsync();
             return true;
          }
-
+     
         public async Task<bool> ConfirmCodeAsync(int userId, int code)
         {
             Code lastCode = await _context.Codes
@@ -86,5 +88,10 @@ namespace SmartHomeAsistent.services.classes
             return true;
 
         }
+
+
+
+
+
     }
 }

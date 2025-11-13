@@ -29,6 +29,8 @@ namespace SmartHomeAsistent.services.interfaces
 
         Task<bool> RecoveryUserAsync(int id);
 
+        Task<bool> ConfirmUserEmailStatusAsync(int id);
+
 
     }
 }

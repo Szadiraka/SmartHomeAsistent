@@ -50,7 +50,7 @@ namespace SmartHomeAsistent.services.classes
 
             user.PasswordHash = passwordHasher.HashPassword(user, userDto.Password);
             await _context.Users.AddAsync(user);
-
+            await _context.SaveChangesAsync();
             //тут нужно создать коде и сохранить в  бд, а также отправить на почту
             var randomCode = new Random().Next(1000, 10000);
             var code = new Code
@@ -75,16 +75,16 @@ namespace SmartHomeAsistent.services.classes
         public async Task<AnswerDTO> Login(string email, string password)
         {
             
-            var user =await _context.Users.FirstOrDefaultAsync(x => x.Email == email && x.Hidden ==false);
+            var user =await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == email && x.Hidden ==false);
             if ( user == null)
-                throw new Exception("Пользователя с такой почтой не существует");
+                throw new NotFoundException("Пользователя с такой почтой не существует");
 
             if (user.IsBlocked)
-                throw new Exception("Пользователь заблокирован");
+                throw new ValidationException("Пользователь заблокирован");
 
              var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
             if(result == PasswordVerificationResult.Failed)
-                throw new Exception("Неверный пароль");
+                throw new ValidationException("Неверный пароль");
        
             string jwtToken = CreateToken(user);       
 
@@ -106,7 +106,7 @@ namespace SmartHomeAsistent.services.classes
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.Name),
                 new Claim(ClaimTypes.Role, user.Role.Name),
-                new Claim("confirmEmail", false.ToString())
+                new Claim("confirmEmail", user.EmailConfirmed.ToString())
             };
 
             JwtSetting jwtSettings = _configuration.GetSection("JwtSettings").Get<JwtSetting>()
@@ -171,6 +171,19 @@ namespace SmartHomeAsistent.services.classes
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> ConfirmUserEmailStatusAsync(int id)
+        {
+            User? user = _context.Users.FirstOrDefault(x => x.Id == id);
+            if (user == null)
+                throw new Exception("Пользователь не найден");
+
+            user.EmailConfirmed = true;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
 
 
         public async Task<bool> BlockUserAsync(int id)
